@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fortnite Item Shop</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="navigation">
+    <button onclick="filterCategory('Outfit')">Skins</button>
+    <button onclick="filterCategory('Pickaxe')">Pickaxes</button>
+    <button onclick="filterCategory('Emote')">Emotes</button>
+    <button onclick="filterCategory('MusicPack')">Jam Tracks</button>
+    <button onclick="filterCategory('Bundle')">Bundles</button>
+    <button onclick="filterCategory('Other')">Other</button>
+    <button onclick="filterCategory('All')">All</button>
+  </div>
+
+  <div id="content">
+    <div id="search-bar">
+      <input type="text" id="search-input" placeholder="Search items..." oninput="searchItems()">
+    </div>
+    <div id="item-display"></div>
+  </div>
+
+  <script>
+    const apiKey = "359e58a4-80f4fa47-9983bd04-5455ad6f";
+    const apiUrl = `https://fortniteapi.io/v2/shop?lang=en`;
+    let allItems = [];
+    let filteredItems = [];
+
+    async function fetchData() {
+      try {
+        const response = await fetch(apiUrl, { headers: { Authorization: apiKey } });
+        const data = await response.json();
+        allItems = data.shop;
+
+        // Assign a category based on mainType or other identifying keys
+        allItems.forEach((item) => {
+          item.category = getCategory(item);
+        });
+
+        filteredItems = allItems; // Initialize with all items
+        displayItems(filteredItems);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    function getCategory(item) {
+      const mainType = item.mainType?.toLowerCase() || "other";
+      if (mainType === "outfit") return "Outfit";
+      if (mainType === "pickaxe") return "Pickaxe";
+      if (mainType === "emote") return "Emote";
+      if (mainType === "musicpack") return "MusicPack"; // Jam Tracks
+      if (mainType === "bundle") return "Bundle";
+      return "Other"; // Default category
+    }
+
+    function displayItems(items) {
+      const itemDisplay = document.getElementById("item-display");
+      itemDisplay.innerHTML = "";
+
+      items.forEach((item) => {
+        const itemElement = document.createElement("div");
+        itemElement.classList.add("item");
+
+        itemElement.innerHTML = `
+          <a href="item.html?mainId=${item.mainId}">
+            <img src="${item.displayAssets?.[0]?.url || 'https://via.placeholder.com/200'}" alt="${item.displayName}">
+            <div class="item-name">${item.displayName || "Unnamed Item"}</div>
+            <div class="item-type">${item.category}</div>
+          </a>
+        `;
+        itemDisplay.appendChild(itemElement);
+      });
+    }
+
+    function filterCategory(category) {
+      if (category === "All") {
+        filteredItems = allItems;
+      } else {
+        filteredItems = allItems.filter(item => item.category === category);
+      }
+      displayItems(filteredItems);
+    }
+
+    function searchItems() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+      const searchResults = filteredItems.filter(item => 
+        item.displayName?.toLowerCase().includes(query) || item.category?.toLowerCase().includes(query)
+      );
+      displayItems(searchResults);
+    }
+
+    // Fetch data on load
+    fetchData();
+  </script>
+</body>
+</html>
